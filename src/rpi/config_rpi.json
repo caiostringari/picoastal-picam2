@@ -1,0 +1,24 @@
+{
+    "data": {
+        "output": "/home/pi/captures/",
+        "hours": [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18 , 19],
+        "format": "jpg"
+    },
+    "capture": {
+        "duration": 900,
+        "framerate": 5,
+        "resolution": [1920, 1080]
+    },
+    "stream": {
+        "duration": 300,
+        "framerate": 30,
+        "resolution": [640, 480]
+    },
+    "post_processing": {
+        "extract_frames": false,
+        "only_last_frame": false,
+        "notify": false,
+        "average": false,
+        "deviation": false
+    }
+}
