@@ -1,13 +1,14 @@
 {
     "data": {
-        "output": "/home/pi/captures/",
+        "output": "/home/picoastal/capture/",
         "hours": [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18 , 19],
         "format": "jpg"
     },
     "capture": {
-        "duration": 900,
-        "framerate": 5,
-        "resolution": [1920, 1080]
+        "duration": 30,
+        "framerate": 10,
+        "resolution": [1920, 1080],
+        "quality": "MEDIUM"
     },
     "stream": {
         "duration": 300,

@@ -25,13 +25,15 @@ import json
 import argparse
 
 # PiCamera
-from picamera2 import Picamera2, Preview
+from picamera2 import Picamera2
+from picamera2.encoders import Quality
+
 
 # logger
 from loguru import logger
 
 
-def set_camera_parameters(cfg):
+def set_camera_parameters(cfg: dict) -> Picamera2:
     """
     Set camera parameters.
 
@@ -49,12 +51,12 @@ def set_camera_parameters(cfg):
     video_config = picam2.create_video_configuration()
 
     # set camera resolution [width x height]
-    video_config["main"]["size"] = (cfg["capture"]["width"], cfg["capture"]["height"])
-
-    # set camera frame rate [Hz]
-    video_config["main"]["framerate"] = cfg["capture"]["framerate"]
-
+    video_config["main"]["size"] = (cfg["capture"]["resolution"][0],
+                                    cfg["capture"]["resolution"][1])
     picam2.configure(video_config)
+    
+    # set camera frame rate [Hz]
+    picam2.set_controls({"FrameRate": cfg["capture"]["framerate"]})
 
     return picam2
 
@@ -74,8 +76,7 @@ def run_single_camera(cfg):
     """
     # set camera parameters
     picam2 = set_camera_parameters(cfg)
-
-
+    
     # capture frames from the camera
     start = datetime.datetime.now()
     duration = cfg["capture"]["duration"]  # total number of seconds
@@ -83,10 +84,21 @@ def run_single_camera(cfg):
     logger.info(f"Capturing {duration} seconds")
     logger.info(f"Capture started at {start}")
     fname = os.path.join(cfg["data"]["output"],
-                         start.strftime("%Y%m%d_%H%M%S.h264"))
-    picam2.start_recording(fname)
-    sleep(duration)
-    picam2.stop_recording()
+                         start.strftime("%Y%m%d_%H%M%S.mp4"))
+    
+    # start record and wait
+    if cfg["capture"]["quality"].lower() == "low":
+        quality = Quality.LOW
+    elif cfg["capture"]["quality"].lower() == "medium":
+        quality = Quality.MEDIUM
+    elif cfg["capture"]["quality"].lower() == "high":
+        quality = Quality.HIGH
+    else:
+        quality = Quality.HIGH
+    
+    picam2.start_and_record_video(output=fname, duration=duration, quality=quality)
+    
+    # stop recording
     end = datetime.datetime.now()
     logger.info(f"Capture finished at {end}")
 
