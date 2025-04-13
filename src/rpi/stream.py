@@ -40,8 +40,8 @@ def run_single_camera(cfg: dict):
     preview_config = picam2.create_preview_configuration()
     
     # Set frame rate and size
-    preview_config["main"]["size"] = (cfg["stream"]["width"], cfg["stream"]["height"])
-    preview_config["main"]["framerate"] = cfg["stream"]["framerate"]
+    preview_config["main"]["size"] = (cfg["stream"]["resolution"][0], cfg["stream"]["resolution"][1])
+#    preview_config["main"]["framerate"] = cfg["stream"]["framerate"]
     
     picam2.configure(preview_config)
 
