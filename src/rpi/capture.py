@@ -11,7 +11,6 @@
 import os
 import sys
 import subprocess
-from time import sleep
 
 # files
 from glob import glob

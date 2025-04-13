@@ -26,17 +26,16 @@ year with a very similar similar set-up to the one described in this repository.
 This project has been developed using a Raspberry Pi Model 5 B with 4Gb of memory.
 
 The components of the system are:
-1. [Raspberry Pi board](https://www.raspberrypi.com/products/raspberry-pi-5/)
-2. [Raspberry Pi 7in display](https://www.raspberrypi.org/products/raspberry-pi-touch-display/)
-3. [Raspberry Pi display case](https://www.canakit.com/raspberry-pi-4-lcd-display-case-pi4.html)
-4. [16Gb+ SD card](https://www.raspberrypi.org/documentation/installation/sd-cards.md)
-5. Keyboard
-6. Mouse
-7. External storage. In this case a 32Gb USB stick.
-8. [Optional] 4G modem for email notifications.
-9. [Optional] Battery bank
-10. [Optional] Solar panel
 
+- [Raspberry Pi board](https://www.raspberrypi.com/products/raspberry-pi-5/)
+- [Raspberry Pi display case](https://www.canakit.com/raspberry-pi-4-lcd-display-case-pi4.html)
+- [16Gb+ SD card](https://www.raspberrypi.org/documentation/installation/sd-cards.md)
+- Keyboard
+- Mouse
+- External storage. In this case a 32Gb USB stick.
+- [Optional] 4G modem for email notifications.
+- [Optional] Battery bank
+- [Optional] Solar panel
 
 Assembly should be straight forward but if in doubt, follow the tutorials from
 the Raspberry Pi Foundation.
@@ -106,7 +105,8 @@ A configuration file is required to drive the camera. It tells the camera when t
     "capture": {
         "duration": 20,
         "framerate": 10,
-        "resolution": [1920, 1080]
+        "resolution": [1920, 1080],
+        "quality": "MEDIUM"
     },
     "stream": {
         "duration": 20,
@@ -116,7 +116,9 @@ A configuration file is required to drive the camera. It tells the camera when t
     "post_processing": {
         "extract_frames": true,
         "only_last_frame": false,
-        "notify": true,
+        "notify": false,
+        "average": false,
+        "deviation": false
     }
 }
 ```
@@ -131,7 +133,8 @@ Streaming and Capturing:
 - ```framerate```: The capture frequency rate in frames per second.
 - ```duration```: Capture cycle duration in seconds.
 - ```resolution```: Image size for capturing or streaming.
-- ```capture_hours```: Capture hours. If outside these hours, the camera does not grab any frames.
+- ```quality```: Image quality (bitrate). Options are `LOW`, `MEDIUM`, `HIGH`.
+- ```hours```: Capture hours. If outside these hours, the camera does not grab any frames.
 
 Post-processing:
 
@@ -139,42 +142,6 @@ Post-processing:
 - ```average```: will create an average image.
 - ```deviation```: will create the deviation image.
 
-
-## 3.3. Email Notifications (Optional)
-
-**Warning**: This will require that you store a ```gmail``` user name and password in
-plain text in your system. I strongly recommend to use an accounted that you
-create exclusively for using the cameras.
-
-After creating the account, create a hidden file named ".gmail" in your home
-folder with the login and password.
-
-```
-cd ~
-nano .gmail
-```
-
-Add the following contents:
-
-```json
-{
-    "credentials": {
-      "login": "some.login@gmail.com",
-      "destination": "some.email@gmail.com",
-      "password": "somepassword"
-    },
-    "options": {
-      "send_log": true,
-      "send_last_frame": true,
-      "send_average": false,
-      "send_deviation:": false
-    }
-}
-```
-
-To save and exit use ```ctrl+o``` + ```ctrl+x```.
-
-Make sure to change gmail's security settings to allow you to send emails using python.
 
 # 4. Capturing Frames
 
@@ -186,17 +153,11 @@ aperture.
 
 To launch the stream do:
 
-### FLIR Camera
-```bash
-cd ~/picoastal
-python3 src/flir/stream.py -i src/flir/config_flir.json > stream.log &
-```
-
-### Raspberry Pi HQ Camera
 ```bash
 cd ~/picoastal
 python3 src/rpi/stream.py -i src/rpi/config_rpi.json > stream.log &
 ```
+
 ### Desktop icon (Optional)
 
 It is also useful to create a desktop shortcut to this script so that you don't need to
@@ -204,7 +165,7 @@ use the terminal every time.
 
 ```bash
 cd ~/Desktop
-nano stream_flir.desktop
+nano stream.desktop
 ```
 
 ```
@@ -212,7 +173,7 @@ nano stream_flir.desktop
 Version=1.0
 Type=Application
 Terminal=true
-Exec=python3 /home/pi/picoastal/src/flir/stream.py -i /home/pi/picoastal/src/flir/config_flir.json
+Exec=python3 /home/pi/picoastal/src/rpi/stream.py -i /home/pi/picoastal/src/rpi/config_rpi.json
 Name=PiCoastal Stream
 Comment=PiCoastal Stream
 Icon=/home/pi/picoastal/doc/camera.png
@@ -220,15 +181,14 @@ Icon=/home/pi/picoastal/doc/camera.png
 
 To save and exit use ```ctrl+o``` + ```ctrl+x```.
 
-To use the **`HQ Camera`**, just change `flir` to `rpi` in the commands above.
 
 ## 4.2. Single Capture Cycle
 
-The main capture program is [capture.py](src/capture.py). To run a single capture cycle, do:
+The main capture program is [capture.py](src/rpi/capture.py). To run a single capture cycle, do:
 
 ```bash
 cd ~/picoastal/
-python3 src/flir/capture.py -i capture.json > capture.log &
+python3 src/rpi/capture.py -i config_rpi.json.json > capture.log &
 ```
 
 Similarly, it's useful to create a Desktop shortcut. For example:
@@ -238,7 +198,7 @@ Similarly, it's useful to create a Desktop shortcut. For example:
 Version=1.0
 Type=Application
 Terminal=true
-Exec=python3 /home/pi/picoastal/src/flir/capture.py -i /home/pi/picoastal/src/flir/config_flir.json
+Exec=python3 /home/pi/picoastal/src/rpi/capture.py -i /home/pi/picoastal/src/rpi/config_rpi.json.json
 Name=PiCoastal Capture
 Comment=PiCoastal Capture
 Icon=/home/pi/picoastal/doc/camera.png
@@ -249,17 +209,14 @@ Icon=/home/pi/picoastal/doc/camera.png
 The recommend way to schedule jobs is using ```cron```.
 
 First we need to create a ```bash``` script that will call all the commands we
-need need within a single capture cycle. One [example](src/flir/cycle_flir.json) would be:
+need need within a single capture cycle. One [example](src/rpi/cycle_rpi.json) would be:
 
 ```bash
 #/bin/bash
 # This is the main capture script controler
 
 # create log dir
-mkdir -p "/home/pi/logs/"
-
-# Export this variable
-export FLIR_GENTL32_CTI=/opt/spinnaker/lib/flir-gentl/FLIR_GenTL.cti
+mkdir -p "/home/pi/logs/"  # Chage here as needed
 
 # Define where your code is located
 workdir="/home/pi/picoastal/src/"
@@ -271,7 +228,7 @@ datestr=$(date +'%Y%m%d_%H%M')
 echo "Current date is : "$date
 
 # Your configuration file
-cfg="/home/pi/picoastal/src/flir/config_flir.json"
+cfg="/home/pi/picoastal/src/rpi/config_rpi.json"
 echo "Capture config file is : "$cfg
 
 # Your email configuration
@@ -288,7 +245,7 @@ echo "Log file is : "$log
 # Call the capture script
 script=capture.py
 echo "Calling script : "$script
-python3 $workdir/flir/$script -cfg $cfg > $log 2>&1
+python3 $workdir/rpi/$script -cfg $cfg > $log 2>&1
 echo $(<$log)
 
 # Optional Post-processing
@@ -326,14 +283,14 @@ If this is your first time using ```crontab```, you will be asked to chose a
 text editor. I recommend using ```nano```. Add this line to the end of the file:
 
 ```
-0 * * * * bash /home/pi/picoastal/src/cycle_flir.sh
+0 * * * * bash /home/pi/picoastal/src/cycle_rpi.sh
 ```
 
 To save and exit use ```ctrl+o``` + ```ctrl+x```.
 
-## 4.4. Controlling the Cameras Remotely
+## 4.4. Controlling the System Remotely
 
-Controlling the cameras remotely is quite easy. All you need to do is to make sure you have [RealVNC](https://www.realvnc.com/en/) installed both in the Raspberry Pi and in your phone. By default, Raspberry Pi Os has VNC installed, on Ubuntu you will need to install it by yourself. Tip: Create a hot spot using a second phone and connect both your main phone and the raspberry to the network to control it in the field.
+The best way to control the camera is by using [Raspberrypi Connect](https://www.raspberrypi.com/software/connect/). It allows for both `SSH` and Remote Desktop access. 
 
 # 5. Camera Calibration
 
@@ -366,13 +323,12 @@ python src/calibration/calib_ChArUco_offline.py - i "input_images/" -o "camera_p
 
 Again, there are several parameters that can be set. Use `calib_ChArUco_offline.py --help` for details.
 
+
 ## 5.3. Online Calibration
 
-To calibrate the FLIR camera on-the-fly, do:
+**Note**: These scripts still need to be updated to use `picam2`.
 
-```bash
-python src/calibration/ChArUco_online_calibration_flir.py - i "config.json" -o "camera_parameters.pkl|json"
-```
+To calibrate the camera on-the-fly, do:
 
 To calibrate the Raspberry Pi camera on-the-fly, do:
 
@@ -551,15 +507,51 @@ python3 src/exp/offline_wave_breaking_segmention.py --model "seg_xception.h5" -i
 ![](doc/wave_breaking_segmentation.gif)
 
 
-# 8. Known issues
+## 8. Email Notifications (Optional)
+
+**Warning**: This will require that you store a ```gmail``` user name and password in
+plain text in your system. I strongly recommend to use an accounted that you
+create exclusively for using the cameras.
+
+After creating the account, create a hidden file named ".gmail" in your home
+folder with the login and password.
+
+```
+cd ~
+nano .gmail
+```
+
+Add the following contents:
+
+```json
+{
+    "credentials": {
+      "login": "some.login@gmail.com",
+      "destination": "some.email@gmail.com",
+      "password": "somepassword"
+    },
+    "options": {
+      "send_log": true,
+      "send_last_frame": true,
+      "send_average": false,
+      "send_deviation:": false
+    }
+}
+```
+
+To save and exit use ```ctrl+o``` + ```ctrl+x```.
+
+Make sure to change gmail's security settings to allow you to send emails using python.
+
+# 9. Known issues
 
 ...
 
-# 8. Future improvements
+# 10. Future improvements
 
 I am open to suggestions. Keep in mind that I work in this project during my spare time and do no have access to much hardware, specially surveying gear.
 
-# 9. Disclaimer
+# 11. Disclaimer
 
 There is no warranty for the program, to the extent permitted by applicable law except when otherwise stated in writing the copyright holders and/or other parties provide the program “as is” without warranty of any kind, either expressed or implied, including, but not limited to, the implied warranties of merchantability and fitness for a particular purpose. the entire risk as to the quality and performance of the program is with you. should the program prove defective, you assume the cost of all necessary servicing, repair or correction.
 
